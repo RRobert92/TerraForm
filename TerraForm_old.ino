@@ -5,6 +5,7 @@
 DHT dht1(DHTPIN1, DHTTYPE);
 DHT dht2(DHTPIN2, DHTTYPE);
 #include <DS3231.h>
+
   // defined which Relay is connected to which port
   int Relay_Rain = 8;
   int Relay_Light = 7;
@@ -16,12 +17,6 @@ Time t;
  // defined array for t.hour
   const int OnHour[] = {8, 9, 10, 11, 12, 13, 14, 15, 16, 17};
   const int OffHour[] = {0, 1, 2, 3, 4, 5, 6, 7, 18, 19, 20, 21, 22, 23, 24};
-
-    //
-  float h1 = dht1.readHumidity();
-  float t1 = dht1.readTemperature();
-  float h2 = dht2.readHumidity();
-  float t2 = dht2.readTemperature();
   int i;
   
 #include <Wire.h>
@@ -48,22 +43,48 @@ void setup() {
   lcd.print("TerraForm V2");
   lcd.setBacklight(GREEN);
 }
+
 void SaftyHotSpotOff_DHT1(){
+  float h1 = dht1.readHumidity();
+  float t1 = dht1.readTemperature();
+  
   if (isnan(h1) || isnan(t1)) {
   // Serial.println("Failed to read from DHT1 sensor!");
+  lcd.clear(); lcd.setCursor(0, 0);
   lcd.print("fail DHT1");
   digitalWrite(Relay_HotSpot, HIGH);
+  delay(1000);
+} else {
+  lcd.clear(); lcd.setCursor(0, 0);
+  lcd.print("DHT1 OK");
+  delay(1000);
 }
 }
 
 void SaftyHeatAndRainOff_DHT2(){
+  float h2 = dht2.readHumidity();
+  float t2 = dht2.readTemperature();
+  
   if (isnan(h2) || isnan(t2)) {
   // Serial.println("Failed to read from DHT2 sensor!");
+  lcd.clear(); lcd.setCursor(0, 0);
+  lcd.print("fail DHT2");
+  delay(1000);
   digitalWrite(Relay_Heat, HIGH);
   digitalWrite(Relay_Rain, HIGH);
+} else {
+  lcd.clear(); lcd.setCursor(0, 0);
+  lcd.print("DHT2 OK");
+  delay(1000);
 }
 }
 void TurnOnOffHotSpot(){
+  float h1 = dht1.readHumidity();
+  float t1 = dht1.readTemperature();
+  const int OnHour[] = {8, 9, 10, 11, 12, 13, 14, 15, 16, 17};
+  const int OffHour[] = {0, 1, 2, 3, 4, 5, 6, 7, 18, 19, 20, 21, 22, 23, 24};
+  t = rtc.getTime();
+   
   for(i=0; i<25; i=i+1){
     if (t1 > 32 || OffHour[i] == t.hour) {
       digitalWrite(Relay_HotSpot, HIGH);
@@ -77,6 +98,9 @@ void TurnOnOffHotSpot(){
 }
 
 void TurnOnOffHeat(){
+  float h2 = dht2.readHumidity();
+  float t2 = dht2.readTemperature();
+  
   if (t2 >= 26) {
     digitalWrite(Relay_Heat, HIGH);
   }
@@ -86,6 +110,9 @@ void TurnOnOffHeat(){
 }
 
 void TurnOnOffRain(){
+  float h2 = dht2.readHumidity();
+  float t2 = dht2.readTemperature();
+  
   if (h2 >= 77) {
     digitalWrite(Relay_Rain, HIGH);
   }
@@ -95,6 +122,10 @@ void TurnOnOffRain(){
 }
 
 void TurnOnOffLight(){
+  const int OnHour[] = {8, 9, 10, 11, 12, 13, 14, 15, 16, 17};
+  const int OffHour[] = {0, 1, 2, 3, 4, 5, 6, 7, 18, 19, 20, 21, 22, 23, 24};
+  t = rtc.getTime();
+  
   for(i=0; i<25; i=i+1){
     if (OnHour[i] == t.hour) {
       digitalWrite(Relay_Light, LOW);
@@ -141,6 +172,9 @@ void loop(){
   lcd.print(t.hour); lcd.print(":"); lcd.print(t.min); lcd.print(":"); lcd.print(t.sec);
   delay (1000);
   
+  float h1 = dht1.readHumidity();
+  float t1 = dht1.readTemperature();
+  
   // display humidity1 and temp1, do nothing for 1000
   lcd.clear(); lcd.setCursor(0, 0);
   lcd.print("Humi1:"); lcd.print(h1); lcd.print("%");
@@ -148,6 +182,8 @@ void loop(){
   lcd.print("Temp1:"); lcd.print(t1); lcd.print("*C");
   delay(1000);
 
+  float h2 = dht2.readHumidity();
+  float t2 = dht2.readTemperature();
   // display humidity2 and temp2, do nothing for 1000
   lcd.clear(); lcd.setCursor(0, 0);
   lcd.print("Humi2:"); lcd.print(h2); lcd.print("%");
