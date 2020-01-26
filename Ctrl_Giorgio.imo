@@ -1,0 +1,191 @@
+#include <Thermocouple.h>
+#include <MAX6675_Thermocouple.h>
+
+#define SCK_PIN1 13
+#define CS_PIN1 12
+#define SO_PIN1 14
+
+Thermocouple* thermocouple1;
+
+#define SCK_PIN2 27
+#define CS_PIN2 26
+#define SO_PIN2 34
+
+Thermocouple* thermocouple2;
+
+#define SCK_PIN3 4
+#define CS_PIN3 2
+#define SO_PIN3 15
+
+Thermocouple* thermocouple3;
+
+#define SCK_PIN4 19
+#define CS_PIN4 18
+#define SO_PIN4 5
+
+Thermocouple* thermocouple4;
+
+#include <Wire.h>
+#include <RTClib.h>
+#include <LiquidCrystal_I2C.h>
+RTC_DS1307 rtc; 
+LiquidCrystal_I2C lcd(0x27, 16, 2); // Set the LCD address to 0x27 for a 16 chars and 2 line display
+
+int Relay1 = 23;
+int Relay2 = 32;
+int Relay3 = 25;
+int Relay4 = 33;
+
+void setup() {
+  
+  pinMode(Relay1, OUTPUT); digitalWrite(Relay1, HIGH);
+  pinMode(Relay2, OUTPUT); digitalWrite(Relay2, HIGH);
+  pinMode(Relay3, OUTPUT); digitalWrite(Relay3, HIGH);
+  pinMode(Relay4, OUTPUT); digitalWrite(Relay4, HIGH);
+  
+  thermocouple1 = new MAX6675_Thermocouple(SCK_PIN1, CS_PIN1, SO_PIN1);
+  thermocouple2 = new MAX6675_Thermocouple(SCK_PIN2, CS_PIN2, SO_PIN2);
+  thermocouple3 = new MAX6675_Thermocouple(SCK_PIN3, CS_PIN3, SO_PIN3);
+  thermocouple4 = new MAX6675_Thermocouple(SCK_PIN4, CS_PIN4, SO_PIN4);
+  
+  while (!Serial); // for Leonardo/Micro/Zero
+  Serial.begin(9600);
+  if (!rtc.begin()) {
+    Serial.println("Couldn't find RTC");
+    while (1);
+  } 
+  
+  if (! rtc.isrunning()) {
+    Serial.println("RTC is NOT running!");
+    //rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); // January 21, 2014 at 3am you would call: rtc.adjust(DateTime(2019, 12, 24, 20, 37, 0));  
+  }    
+  
+  lcd.begin();  // initialize the LCD
+  lcd.backlight(); // Turn on the blacklight and print a message.
+}
+
+void loop() {
+  DateTime now = rtc.now();
+  //hh - the hour with a leading zero (00 to 23) 
+  //mm - the minute with a leading zero (00 to 59)
+  //ss - the whole second with a leading zero where applicable (00 to 59)
+  //YYYY - the year as four digit number
+  //YY - the year as two digit number (00-99)
+  //MM - the month as number with a leading zero (01-12)
+  //MMM - the abbreviated English month name ('Jan' to 'Dec')
+  //DD - the day as number with a leading zero (01 to 31)
+  //DDD - the abbreviated English day name ('Mon' to 'Sun')
+  
+  char hour[] = "hh";Serial.println(now.toString(hour));
+  char time[] = "hh:mm:ss"; Serial.println(now.toString(time));   
+  char date[] = "DDD, MMM DD YYYY"; Serial.println(now.toString(date)); 
+  
+ // lcd.clear(); lcd.print("Time"); lcd.setCursor (0,1); lcd.print(time); delay(1500); 
+  
+  float t1 = thermocouple1->readCelsius();
+  Serial.print("Temperature1: "); Serial.print(t1); Serial.println(" *C");
+  
+  if (! isnan(t1)) {  // check if 'is not a number'
+  } else { 
+    Serial.println("Failed to read temperature");
+    lcd.clear(); lcd.setCursor(0, 0);
+    lcd.print("Fail TC1"); delay(1000);
+    digitalWrite(Relay1, HIGH); 
+  }
+  
+  float t2 = thermocouple2->readCelsius();
+  Serial.print("Temperature2: "); Serial.print(t2); Serial.println(" *C");
+  
+  if (! isnan(t2)) {  // check if 'is not a number'
+  } else { 
+    Serial.println("Failed to read temperature");
+    lcd.clear(); lcd.setCursor(0, 0);
+    lcd.print("Fail TC2"); delay(1000);
+    digitalWrite(Relay2, HIGH); 
+  }
+  
+  float t3 = thermocouple3->readCelsius();
+  Serial.print("Temperature3: "); Serial.print(t3); Serial.println(" *C");
+  
+  if (! isnan(t3)) {  // check if 'is not a number'
+  } else { 
+    Serial.println("Failed to read temperature");
+    lcd.clear(); lcd.setCursor(0, 0);
+    lcd.print("Fail TC3"); delay(1000);
+    digitalWrite(Relay3, HIGH);
+  }
+  
+  float t4 = thermocouple4->readCelsius();
+  Serial.print("Temperature4: "); Serial.print(t4); Serial.println(" *C");
+  
+  if (! isnan(t4)) {  // check if 'is not a number'
+  } else { 
+    Serial.println("Failed to read temperature");
+    lcd.clear(); lcd.setCursor(0, 0);
+    lcd.print("Fail TC4"); delay(1000);
+    digitalWrite(Relay4, HIGH);
+  }
+  
+  lcd.clear(); lcd.print("1="); lcd.print(t1); lcd.print("C "); 
+  lcd.print("2="); lcd.print(t2); lcd.print("C ");
+  lcd.setCursor (0,1); lcd.print("3="); lcd.print(t3); lcd.print("C "); 
+  lcd.print("4=");  lcd.print(t4); lcd.print("C "); delay(1500);
+  
+  
+  //if (test1 == test2) TRUE/FALSE == TRUE/FALSE or TRUE/FALSE == FASE/TRUE
+  if (11 <= now.hour() && now.hour() <= 18) {
+      if (t1 <= 32){
+        digitalWrite(Relay1, LOW);
+      } else if (t1 >= 34){
+        digitalWrite(Relay1, HIGH);
+      }
+  } else {
+    if (t1 <= 26){
+        digitalWrite(Relay1, LOW); 
+      } else if (t1 >= 28){
+        digitalWrite(Relay1, HIGH);
+      }
+  }
+  
+    if (11 <= now.hour() && now.hour() <= 18) {
+      if (t2 <= 32){
+        digitalWrite(Relay2, LOW);
+      } else if (t2 >= 34){
+        digitalWrite(Relay2, HIGH);
+      }
+  } else {
+    if (t2 <= 26){
+        digitalWrite(Relay2, LOW); 
+      } else if(t2 >= 28){
+        digitalWrite(Relay2, HIGH);
+      }
+  }
+  
+    if (11 <= now.hour() && now.hour() <= 18) {
+      if (t3 <= 32){
+        digitalWrite(Relay3, LOW);
+      } else if (t3 >= 34){
+        digitalWrite(Relay3, HIGH);
+      }
+    } else {
+    if (t3 <= 26){
+        digitalWrite(Relay3, LOW); 
+      } else if (t3 >= 28){
+        digitalWrite(Relay3, HIGH);
+      }
+  }
+  
+    if (11 <= now.hour() && now.hour() <= 18) {
+      if (t4 <= 32){
+        digitalWrite(Relay4, LOW);
+      } else if (t4 >= 34){
+        digitalWrite(Relay4, HIGH);
+      }
+  } else {
+    if (t4 <= 26){
+        digitalWrite(Relay4, LOW); 
+      } else if (t4 >= 28){
+        digitalWrite(Relay4, HIGH);
+      }
+  }
+}
